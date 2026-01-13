@@ -367,7 +367,7 @@ black_checker:
   jmp bnormal_single
 
 black_checker_1:
-  lda #$0e
+  lda #$e0
   sta OTP
 
   lda #$00
@@ -399,7 +399,7 @@ black_checker_for_double:
   sta OTP
   jsr boption_ki
   lda OTP
-  cmp #$0e
+  cmp #$e0
   bne black_checker_for_double_1
   jmp b_hit_fc
 black_checker_for_double_1:
@@ -2777,10 +2777,14 @@ w_capable:
 
   jsr wable_pn_a
   jsr wable_pn_b
+  pla
+  tay
   
   rts
 
 w_blockable:
+  tya
+  pha
 
   jsr wable_nv
   jsr wable_ne
