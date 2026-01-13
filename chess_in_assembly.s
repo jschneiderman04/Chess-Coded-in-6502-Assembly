@@ -1,7 +1,7 @@
-PORTB = $6000 ; WRITE FULL CODE, USE BOTH HELPERS AND 27
+PORTB = $6000 
 PORTA = $6001
 DDRB  = $6002
-DDRA  = $6003
+DDRA  = $6003 ; ports A and B communicate with the arduino
 
 S     = %00000001
 RDY   = %00000010
@@ -24,50 +24,50 @@ bb    = %11000010
 bn    = %11000001
 bp    = %11000000
 
-WKP   = $80
-BKP   = $81
+WKP   = $80 ; White King Position
+BKP   = $81 ; Black King Position
 
-WCA   = $82
-BCA   = $83
+WCA   = $82 ; White Castle Allow
+BCA   = $83 ; Black Castle Allow
 
-SQC   = $84
-SQO   = $85
-SQF   = $86
+SQC   = $84 ; SQuare of Contention
+SQO   = $85 ; SQuare Original
+SQF   = $86 ; SQuare Final
 
-ENS   = $87 ;sets en passant, if pawn moves double, set ff
+ENS   = $87 ; EN passant Set
 
-UPC   = $88
-CKC   = $89
+UPC   = $88 ; UnPinned Counter (OBS)
+CKC   = $89 ; ChecK Counter
 
-SCC   = $8a
-LCC   = $8b
+SCC   = $8a ; Short Castle Counter (OBS)
+LCC   = $8b ; Long Castle Counter (OBS)
 
-OTP   = $8c
-KMP   = $8d
-BSP   = $8e
-BPP   = $8f
+OTP   = $8c ; OpTion Pointer
+KMP   = $8d ; King Move Pointer (OBS)
+BSP   = $8e ; Blocking Square Pointer
+BPP   = $8f ; Block Piece Pointer
 
-WENA  = $90 ; set ff
-WENB  = $91 ; set ff
-BENA  = $92 ; set ff
-BENB  = $93 ; set ff
+WENA  = $90 ; set ff ; White EN passant A
+WENB  = $91 ; set ff ; White EN passant B
+BENA  = $92 ; set ff ; Black EN passant A
+BENB  = $93 ; set ff ; Black EN passant B
 
-CSTLR = $94 ; set ff
-CSTLL = $95 ; set ff
-ENP   = $96 ; set ff
-PROM  = $97 ; set ff
+CSTLR = $94 ; set ff ; CaSTLe Right
+CSTLL = $95 ; set ff ; CaSTLe Left
+ENP   = $96 ; set ff ; EN Passant
+PROM  = $97 ; set ff ; PROMotion
 
-SQR   = $98
-PIN   = $99
+SQR   = $98 ; SQuaRe
+PIN   = $99 ; multiuse variable
 
-SSP   = $0a
-SSV   = $09
-SSO   = $08
+SSP   = $0a ; Send Sqaure Position
+SSV   = $09 ; Send Square Value
+SSO   = $08 ; Send Square Other
 
-VLA   = $9c 
-VLB   = $9d
-VLC   = $9e
-VLD   = $9f
+VLA   = $9c ; VaLue A
+VLB   = $9d ; VaLue B
+VLC   = $9e ; VaLue C
+VLD   = $9f ; VaLue D
 
 
   .org $8000
