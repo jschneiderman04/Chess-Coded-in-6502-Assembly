@@ -69,7 +69,6 @@ VLB   = $9d ; VaLue B
 VLC   = $9e ; VaLue C
 VLD   = $9f ; VaLue D
 
-
   .org $8000
 
 reset:
@@ -399,7 +398,7 @@ black_checker_for_double:
   sta OTP
   jsr boption_ki
   lda OTP
-  cmp #$e0
+  cmp #$0e
   bne black_checker_for_double_1
   jmp b_hit_fc
 black_checker_for_double_1:
@@ -612,7 +611,22 @@ bnormal_single_4:
 w_cfc_enp:
   lda BENA
   cmp #$ff
-  bne w_cfc_enp_1
+  bne w_cfc_enp_0
+  jmp w_cfc_enp_end
+
+w_cfc_enp_0:
+  lda BENA
+  sec
+  sbc #$11
+  cmp WKP
+  beq w_cfc_enp_1
+
+  lda BENA
+  sec
+  sbc #$0f
+  cmp WKP
+  beq w_cfc_enp_1
+
   jmp w_cfc_enp_end
 
 w_cfc_enp_1:
@@ -671,7 +685,22 @@ w_cfc_enp_end:
 b_cfc_enp:
   lda WENA
   cmp #$ff
-  bne b_cfc_enp_1
+  bne b_cfc_enp_0
+  jmp b_cfc_enp_end
+
+b_cfc_enp_0:
+  lda WENA
+  clc
+  adc #$11
+  cmp BKP
+  beq b_cfc_enp_1
+
+  lda WENA
+  clc
+  adc #$0f
+  cmp BKP
+  beq b_cfc_enp_1
+
   jmp b_cfc_enp_end
 
 b_cfc_enp_1:
@@ -2760,6 +2789,7 @@ bcfkme:
 w_capable:
   tya
   pha
+
   jsr wable_nv
   jsr wable_ne
   jsr wable_sv
@@ -2781,6 +2811,7 @@ w_capable:
 
   jsr wable_pn_a
   jsr wable_pn_b
+
   pla
   tay
   
@@ -8556,6 +8587,21 @@ pawn_special:
   cmp #$ff
   beq pawn_special_1
 
+  lda BENA
+  sec
+  sbc #$0f
+  cmp WKP
+  beq pawn_special_w
+
+  lda BENA
+  sec
+  sbc #$11
+  cmp WKP
+  beq pawn_special_w
+
+  jmp pawn_special_1
+
+pawn_special_w:
   ldx BENB
   lda $00, x
   ora #%00010000
@@ -8573,6 +8619,21 @@ pawn_special_1:
   cmp #$ff
   beq pawn_special_end
 
+  lda WENA
+  clc
+  adc #$11
+  cmp BKP
+  beq pawn_special_b
+
+  lda WENA
+  clc
+  adc #$0f
+  cmp BKP
+  beq pawn_special_b
+
+  jmp pawn_special_end
+
+pawn_special_b:
   ldx WENB
   lda $00, x
   ora #%00010000
