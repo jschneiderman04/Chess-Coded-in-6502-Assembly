@@ -69,6 +69,13 @@ VLB   = $9d ; VaLue B
 VLC   = $9e ; VaLue C
 VLD   = $9f ; VaLue D
 
+LOW   = $a0
+HIGH  = $a1
+
+COUNT = $a2
+MORE  = $a3
+
+
   .org $8000
 
 reset:
@@ -87,9 +94,16 @@ main:
   jsr load_white
 
 start:
+  lda #$02
+  sta COUNT
   jsr load_board
+  jsr update_status
 
 white:
+
+  lda #$00
+  sta OTP
+  jsr load_status
 
 white_start:
   jsr wcheckb
@@ -117,7 +131,7 @@ white_checker_1:
 
   lda #$00
   sta VLB
-  jsr w_cfc_enp ; make subroutine
+  jsr w_cfc_enp
   lda VLB
   beq white_checker_2
   jmp wnormal_single
@@ -167,8 +181,29 @@ w_cm_repeat:
   jsr load_black
   lda SQC
   cmp #$89
+  beq w_cm_start
+
+  lda SQC
+  cmp #$8a
+  bne w_cm_redo
+
+  jsr dec_addr
+  lda VLD
+  beq w_cm_start
+  jmp black
+
+w_cm_redo:
+  lda SQC
+  cmp #$8b
   bne w_cm_repeat
 
+  jsr de2_addr
+  lda VLD
+  beq w_cm_start
+  jmp white
+
+
+w_cm_start:
   jmp start ; reset the game
 
 ;******
@@ -179,8 +214,33 @@ wnormal_1:
   jsr load_white
   lda SQC
   cmp #$fe
-  bne wnormal_1a
+  beq wnormal_start
+  
+  lda SQC
+  cmp #$fd
+  beq wnormal_repeat
+
+  lda SQC
+  cmp #$fc
+  beq wnormal_redo
+
+  jmp wnormal_1a
+
+wnormal_repeat:
+  jsr dec_addr
+  lda VLD
+  beq wnormal_start
+  jmp black
+
+wnormal_redo:
+  jsr de2_addr
+  lda VLD
+  beq wnormal_start
+  jmp white
+
+wnormal_start:
   jmp start
+
 wnormal_1a:
   lda SQC
   and #$88
@@ -227,6 +287,7 @@ wnormal_4:
   sta SQF
   jsr wmove
   jsr delay
+  jsr update_status
   jmp black  
 
 
@@ -236,7 +297,31 @@ wnormal_double_1:
   jsr load_white
   lda SQC
   cmp #$fe
-  bne wnormal_double_1a
+  beq wnormal_double_start ; add back arrow
+  
+  lda SQC
+  cmp #$fd
+  beq wnormal_double_repeat
+
+  lda SQC
+  cmp #$fc
+  beq wnormal_double_redo
+
+  jmp wnormal_double_1a
+
+wnormal_double_repeat:
+  jsr dec_addr
+  lda VLD
+  beq wnormal_double_start
+  jmp black
+
+wnormal_double_redo:
+  jsr de2_addr
+  lda VLD
+  beq wnormal_double_start
+  jmp white
+
+wnormal_double_start:
   jmp start
 wnormal_double_1a:
   lda SQC
@@ -255,7 +340,7 @@ wnormal_double_3:
   jsr load_white
   lda SQC
   cmp #$fe
-  bne wnormal_double_3a
+  bne wnormal_double_3a ; add back arrow
   jmp start
 wnormal_double_3a:
   lda SQC
@@ -277,7 +362,8 @@ wnormal_double_4:
   sta SQF
   jsr wmove
   jsr delay
-  jmp black 
+  jsr update_status
+  jmp black
 
 
 ;*********
@@ -289,7 +375,31 @@ wnormal_single_1:
   jsr load_white
   lda SQC
   cmp #$fe
-  bne wnormal_single_1a
+  beq wnormal_single_start ; add back arrow
+
+  lda SQC
+  cmp #$fd
+  beq wnormal_single_repeat
+
+  lda SQC
+  cmp #$fc
+  beq wnormal_single_redo
+
+  jmp wnormal_single_1a
+
+wnormal_single_repeat:
+  jsr dec_addr
+  lda VLD
+  beq wnormal_single_start
+  jmp black
+
+wnormal_single_redo:
+  jsr de2_addr
+  lda VLD
+  beq wnormal_single_start
+  jmp white
+
+wnormal_single_start:
   jmp start
 wnormal_single_1a:
   lda SQC
@@ -315,7 +425,7 @@ wnormal_single_3:
   jsr load_white
   lda SQC
   cmp #$fe
-  bne wnormal_single_3a
+  bne wnormal_single_3a ; add back arrow
   jmp start
 wnormal_single_3a:
   lda SQC
@@ -337,6 +447,7 @@ wnormal_single_4:
   sta SQF
   jsr wmove
   jsr delay
+  jsr update_status
   jmp black  
 
 ;**********************************************************
@@ -344,6 +455,10 @@ wnormal_single_4:
 ;**********************************************************
 
 black:
+
+  lda #$00
+  sta OTP
+  jsr load_status
 
 black_start:
   jsr bcheckb
@@ -424,8 +539,28 @@ b_cm_repeat:
   jsr load_white
   lda SQC
   cmp #$fe
+  beq b_cm_start ; add back arrow
+
+  lda SQC
+  cmp #$fd
+  bne b_cm_redo
+
+  jsr dec_addr
+  lda VLD
+  beq b_cm_start
+  jmp white
+
+b_cm_redo:
+  lda SQC
+  cmp #$fc
   bne b_cm_repeat
 
+  jsr de2_addr
+  lda VLD
+  beq b_cm_start
+  jmp black
+
+b_cm_start:
   jmp start
 
 
@@ -435,8 +570,33 @@ bnormal_1:
   jsr load_black
   lda SQC
   cmp #$89
-  bne bnormal_1a
+  beq bnormal_start ; add back arrow
+  
+  lda SQC
+  cmp #$8a
+  beq bnormal_repeat
+
+  lda SQC
+  cmp #$8b
+  beq bnormal_redo
+
+  jmp bnormal_1a
+
+bnormal_repeat:
+  jsr dec_addr
+  lda VLD
+  beq bnormal_start
+  jmp white
+
+bnormal_redo:
+  jsr de2_addr
+  lda VLD
+  beq bnormal_start
+  jmp black
+
+bnormal_start:
   jmp start
+
 bnormal_1a:
   lda SQC
   and #$88
@@ -461,7 +621,7 @@ bnormal_3:
   jsr load_black
   lda SQC
   cmp #$89
-  bne bnormal_3a
+  bne bnormal_3a ; add back arrow
   jmp start
 bnormal_3a:
   lda SQC
@@ -483,6 +643,7 @@ bnormal_4:
   sta SQF
   jsr bmove
   jsr delay
+  jsr update_status
   jmp white  
 
 
@@ -491,9 +652,34 @@ bnormal_double:
 bnormal_double_1:
   jsr load_black
   lda SQC
-  cmp #$fe
-  bne bnormal_double_1a
+  cmp #$89
+  beq bnormal_double_start
+  
+  lda SQC
+  cmp #$8a
+  beq bnormal_double_repeat
+
+  lda SQC
+  cmp #$8b
+  beq bnormal_double_redo
+
+  jmp bnormal_double_1a
+ 
+bnormal_double_repeat:
+  jsr dec_addr
+  lda VLD
+  beq bnormal_double_start
+  jmp white
+
+bnormal_double_redo:
+  jsr de2_addr
+  lda VLD
+  beq bnormal_double_start
+  jmp black
+
+bnormal_double_start:
   jmp start
+
 bnormal_double_1a:
   lda SQC
   cmp BKP
@@ -533,6 +719,7 @@ bnormal_double_4:
   sta SQF
   jsr bmove
   jsr delay
+  jsr update_status
   jmp white
 
 
@@ -545,8 +732,33 @@ bnormal_single_1:
   jsr load_black
   lda SQC
   cmp #$89
-  bne bnormal_single_1a
+  beq bnormal_single_start
+
+  lda SQC
+  cmp #$8a
+  beq bnormal_single_repeat
+
+  lda SQC
+  cmp #$8b
+  beq bnormal_single_redo
+
+  jmp bnormal_single_1a
+
+bnormal_single_repeat:
+  jsr dec_addr
+  lda VLD
+  beq bnormal_single_start
+  jmp white
+
+bnormal_single_redo:
+  jsr de2_addr
+  lda VLD
+  beq bnormal_single_start
+  jmp black
+
+bnormal_single_start:
   jmp start
+
 bnormal_single_1a:
   lda SQC
   and #$88
@@ -571,7 +783,7 @@ bnormal_single_3:
   jsr load_black
   lda SQC
   cmp #$89
-  bne bnormal_single_3a
+  bne bnormal_single_3a ; add back arrow
   jmp start
 bnormal_single_3a:
   lda SQC
@@ -593,6 +805,7 @@ bnormal_single_4:
   sta SQF
   jsr bmove
   jsr delay
+  jsr update_status
   jmp white  
 
 ;**********************************************************
@@ -601,12 +814,227 @@ bnormal_single_4:
 
 ;SUBROUTINES
 
+;**********************************************************
+;**********************************************************
+;**********************************************************
 
-;CHECK FOR CHECK MAIN START FUNCTION SUBROUTINES FIRST
+generate_address:
+  lda COUNT
+  and #$01
+  bne black_address
+
+white_address:
+  lda #$00
+  sta LOW
+  jmp high_address
+
+black_address:
+  lda #$80
+  sta LOW
+  jmp high_address
+
+high_address:
+  lda COUNT
+  clc
+  adc MORE
+  ror
+  and #$3f
+  sta HIGH
+
+  rts
+
+;**********************************************************
+
+inc_addr:
+  ldx COUNT
+  inx
+  stx COUNT
+  
+  jsr generate_address
+  lda HIGH
+  and #$fe
+  bne inc_addr_end
+
+  ldx MORE
+  inx
+  inx
+  stx MORE
+inc_addr_end:
+  rts
+
+;**********************************************************
+
+dec_addr:
+  lda #$ff
+  sta VLD
+
+  ldx COUNT
+  dex
+  stx COUNT
+
+  jsr generate_address
+  lda HIGH
+  and #$fe
+  bne dec_addr_end
+
+  lda MORE
+  bne dec_addr_more
+
+  lda #$00
+  sta VLD
+
+dec_addr_more:
+  ldx MORE
+  dex
+  dex
+  stx MORE
+dec_addr_end:
+  rts
+
+;**********************************************************
+
+de2_addr:
+  lda #$ff
+  sta VLD
+
+  ldx COUNT
+  dex
+  dex
+  stx COUNT
+
+  jsr generate_address
+  lda HIGH
+  and #$fe
+  bne de2_addr_end
+
+  lda MORE
+  bne de2_addr_more
+
+  lda #$00
+  sta VLD
+
+de2_addr_more:
+  ldx MORE
+  dex
+  dex
+  stx MORE
+de2_addr_end:
+  rts
+
+
+;**********************************************************
+
+
+update_status:
+  jsr inc_addr
+
+  jsr generate_address
+
+  ldy #$08
+  lda WENA
+  sta ($a0),y
+
+  ldy #$09
+  lda WENB
+  sta ($a0),y
+
+  ldy #$0a
+  lda BENA
+  sta ($a0),y
+
+  ldy #$0b
+  lda BENB
+  sta ($a0),y
+
+  ldy #$0c
+  lda WCA
+  sta ($a0),y
+
+  ldy #$0d
+  lda BCA
+  sta ($a0),y
+
+  ldy #$0e
+  lda WKP
+  sta ($a0),y
+
+  ldy #$0f
+  lda BKP
+  sta ($a0),y
+
+  ldy #$80
+update_status_1:
+  dey
+  tya
+  and #$88
+  bne update_status_1
+
+  lda $00,y
+  sta ($a0),y
+
+  tya
+  bne update_status_1
+
+  rts
+
+
+;**********************************************************
+
+
+load_status:
+  jsr generate_address
+
+  ldy #$08
+  lda ($a0),y
+  sta WENA
+
+  ldy #$09
+  lda ($a0),y
+  sta WENB
+
+  ldy #$0a
+  lda ($a0),y
+  sta BENA
+
+  ldy #$0b
+  lda ($a0),y
+  sta BENB
+
+  ldy #$0c
+  lda ($a0),y
+  sta WCA
+
+  ldy #$0d
+  lda ($a0),y
+  sta BCA
+
+  ldy #$0e
+  lda ($a0),y
+  sta WKP
+
+  ldy #$0f
+  lda ($a0),y
+  sta BKP
+
+  ldy #$80
+load_status_1:
+  dey
+  tya
+  and #$88
+  bne load_status_1
+
+  lda ($a0),y
+  sta $00,y
+  
+  tya
+  bne load_status_1
+
+  rts
 
 ;**********************************************************
 ;**********************************************************
 ;**********************************************************
+
 
 w_cfc_enp:
   lda BENA
@@ -1137,6 +1565,8 @@ wcheckb:
   sta CKC
   lda #$d0
   sta BSP
+  lda #$b0
+  sta BPP
 
   jsr wcheckb_kn
   jsr wcheckb_pn
@@ -1777,6 +2207,8 @@ bcheckb:
   sta CKC
   lda #$d0
   sta BSP
+  lda #$b0
+  sta BPP
 
   jsr bcheckb_kn
   jsr bcheckb_pn
