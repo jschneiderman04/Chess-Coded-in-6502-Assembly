@@ -14,6 +14,8 @@ from serial import SerialException
 IMG_DIR = "/Users/jacobschneiderman/C++"
 TITLE_IMG_CHESS = os.path.join(IMG_DIR, "CHESS.png")
 TITLE_IMG_GAME = os.path.join(IMG_DIR, "GAME.png")
+TITLE_IMG_BACK = os.path.join(IMG_DIR, "yellow_back.png")
+TITLE_IMG_REDO = os.path.join(IMG_DIR, "orange_back.png")
 
 SERIAL_PORT = "/dev/cu.usbmodem14201"
 BAUDRATE = 57600
@@ -120,11 +122,18 @@ def load_images():
 def load_title_images():
     chess_img = pygame.image.load(TITLE_IMG_CHESS).convert_alpha()
     game_img = pygame.image.load(TITLE_IMG_GAME).convert_alpha()
+    back_img = pygame.image.load(TITLE_IMG_BACK).convert_alpha()
+    redo_img = pygame.image.load(TITLE_IMG_REDO).convert_alpha()
+
     chess_img = pygame.transform.smoothscale(chess_img, (int(chess_img.get_width()*0.3),
                                                          int(chess_img.get_height()*0.3)))
     game_img = pygame.transform.smoothscale(game_img, (int(game_img.get_width()*0.3),
                                                        int(game_img.get_height()*0.3)))
-    return chess_img, game_img
+    back_img = pygame.transform.smoothscale(back_img, (int(back_img.get_width()*0.3),
+                                                       int(back_img.get_width()*0.3)))
+    redo_img = pygame.transform.smoothscale(redo_img, (int(redo_img.get_width()*0.3),
+                                                       int(redo_img.get_height()*0.3)))
+    return chess_img, game_img, back_img, redo_img
 
 # ---------------------------
 # Serial reader
@@ -154,7 +163,7 @@ def main():
     clock = pygame.time.Clock()
 
     images = load_images()
-    chess_title, game_title = load_title_images()
+    chess_title, game_title, back_title, redo_title = load_title_images()
     board = make_empty_board()
 
     decoded_moves = {}
@@ -195,10 +204,20 @@ def main():
 
                     chess_rect = chess_title.get_rect(center=(panel_center, BEZEL_THICKNESS + chess_title.get_height()//2 + 20))
                     game_rect = game_title.get_rect(center=(panel_center, BEZEL_THICKNESS + chess_title.get_height() + 40 + game_title.get_height()//2))
+                    back_rect = back_title.get_rect(center=(panel_center + 120, BEZEL_THICKNESS + 600))
+                    redo_rect = redo_title.get_rect(center=(panel_center + 120, BEZEL_THICKNESS + 520))
 
                     if chess_rect.collidepoint(mx, my) or game_rect.collidepoint(mx, my):
                         if ser and ser.is_open:
                             ser.write(bytes([0xFE]))
+
+                    if back_rect.collidepoint(mx, my):
+                        if ser and ser.is_open:
+                            ser.write(bytes([0xFD]))
+                    
+                    if redo_rect.collidepoint(mx, my):
+                        if ser and ser.is_open:
+                            ser.write(bytes([0xFC]))
 
                     clicked_promo = False
                     for loc, (x, y) in promo_positions.items():
@@ -302,8 +321,13 @@ def main():
 
             chess_rect = chess_title.get_rect(center=(panel_center, BEZEL_THICKNESS + chess_title.get_height()//2 + 20))
             game_rect = game_title.get_rect(center=(panel_center, BEZEL_THICKNESS + chess_title.get_height() + 40 + game_title.get_height()//2))
+            back_rect = back_title.get_rect(center=(panel_center + 120, BEZEL_THICKNESS + 600))
+            redo_rect = redo_title.get_rect(center=(panel_center + 120, BEZEL_THICKNESS + 520))
+
             screen.blit(chess_title, chess_rect.topleft)
             screen.blit(game_title, game_rect.topleft)
+            screen.blit(back_title, back_rect.topleft)
+            screen.blit(redo_title, redo_rect.topleft)
 
             pygame.display.flip()
             clock.tick(FPS)
